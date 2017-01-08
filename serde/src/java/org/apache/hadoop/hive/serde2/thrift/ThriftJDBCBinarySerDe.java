@@ -20,19 +20,17 @@ package org.apache.hadoop.hive.serde2.thrift;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
+import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -68,7 +66,6 @@ public class ThriftJDBCBinarySerDe extends AbstractSerDe {
   private int MAX_BUFFERED_ROWS;
   private int count;
   private StructObjectInspector rowObjectInspector;
-  private CompDe compde;
 
 
   @Override
@@ -130,43 +127,32 @@ public class ThriftJDBCBinarySerDe extends AbstractSerDe {
   }
 
   private Writable serializeBatch() throws SerDeException {
-    output.reset();
-
-    if (compde != null) {
-      try {
-        protocol.writeBinary(compde.compress(columnBuffers));
-      } catch (Exception e) {
-        throw new SerDeException(e);
-      }
-    }
-    else {
-      for (int i = 0; i < columnBuffers.length; i++) {
-        TColumn tColumn = columnBuffers[i].toTColumn();
-        try {
-          tColumn.write(protocol);
-        } catch(TException e) {
-          throw new SerDeException(e);
-        }
-      }
-    }
-
-    initializeRowAndColumns();
-    serializedBytesWritable.set(output.getData(), 0, output.getLength());
-    return serializedBytesWritable;
+	  output.reset();
+	  for (int i = 0; i < columnBuffers.length; i++) {
+		  TColumn tColumn = columnBuffers[i].toTColumn();
+		  try {
+			  tColumn.write(protocol);
+		  } catch(TException e) {
+			  throw new SerDeException(e);
+		  }
+	  }
+	  initializeRowAndColumns();
+	  serializedBytesWritable.set(output.getData(), 0, output.getLength());
+	  return serializedBytesWritable;
   }
 
   // use the columnNames to initialize the reusable row object and the columnBuffers. reason this is being done is if buffer is full, we should reinitialize the
   // column buffers, otherwise at the end when closeOp() is called, things get printed multiple times.
   private void initializeRowAndColumns() {
-    row = new ArrayList<Object>(columnNames.size());
-    for (int i = 0; i < columnNames.size(); i++) {
-      row.add(null);
-    }
-    // Initialize column buffers
-    columnBuffers = new ColumnBuffer[columnNames.size()];
-    for (int i = 0; i < columnBuffers.length; i++) {
-      columnBuffers[i] = new ColumnBuffer(Type.getType(columnTypes.get(i)));
-    }
+	    row = new ArrayList<Object>(columnNames.size());
+	    for (int i = 0; i < columnNames.size(); i++) {
+	      row.add(null);
+	    }
+	    // Initialize column buffers
+	    columnBuffers = new ColumnBuffer[columnNames.size()];
+	    for (int i = 0; i < columnBuffers.length; i++) {
+	      columnBuffers[i] = new ColumnBuffer(Type.getType(columnTypes.get(i)));
+	    }
   }
 
   /**
@@ -181,10 +167,10 @@ public class ThriftJDBCBinarySerDe extends AbstractSerDe {
     StructObjectInspector soi = (StructObjectInspector) objInspector;
     List<? extends StructField> fields = soi.getAllStructFieldRefs();
     try {
-      Object[] formattedRow = (Object[]) thriftFormatter.convert(obj, objInspector);
-      for (int i = 0; i < columnNames.size(); i++) {
-        columnBuffers[i].addValue(formattedRow[i]);
-      }
+	    Object[] formattedRow = (Object[]) thriftFormatter.convert(obj, objInspector);
+	    for (int i = 0; i < columnNames.size(); i++) {
+	        columnBuffers[i].addValue(formattedRow[i]);
+	    }
     } catch (Exception e) {
         throw new SerDeException(e);
     }
