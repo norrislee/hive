@@ -75,25 +75,23 @@ public class TestCompDeNegotiation {
 
     clientMultiCompDes2 = new HiveConf(baseConf);
     clientMultiCompDes2.set(clientCompressorListVarName(), "compde2, compde4");
-    clientMultiCompDes2.set(clientCompdeParamPrefix("compde2") + ".version", "2.0");
+    clientMultiCompDes2.set(clientCompdeParamPrefix("compde2") + ".version", "1.0");
     clientMultiCompDes2.set(clientCompdeParamPrefix("compde4") + ".version", "1.0");
     serverMultiCompDes2 = new HiveConf(baseConf);
     serverMultiCompDes2.setVar(ConfVars.HIVE_SERVER2_THRIFT_RESULTSET_COMPRESSOR_LIST, "compde2, compde4");
 
     serverCompDeConf = new HiveConf(baseConf);
     serverCompDeConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_RESULTSET_COMPRESSOR_LIST, "compde3");
-    serverCompDeConf.set(noCompDeConfigPrefix("compde3-2.0") + ".test1", "serverVal1");
-    serverCompDeConf.set(noCompDeConfigPrefix("compde3-2.0") + ".test2", "serverVal2");//overriden by client
-    serverCompDeConf.set(noCompDeConfigPrefix("compde3-2.0") + ".test4", "serverVal4");//overriden by plug-in
-    serverCompDeConf.set(noCompDeConfigPrefix("compde3-1.0") + ".test5", "serverVal5");//no used
+    serverCompDeConf.set(noCompDeConfigPrefix("compde3") + ".test1", "serverVal1");
+    serverCompDeConf.set(noCompDeConfigPrefix("compde3") + ".test2", "serverVal2");//overriden by client
+    serverCompDeConf.set(noCompDeConfigPrefix("compde3") + ".test4", "serverVal4");//overriden by plug-in
 
     clientCompDeConf = new HiveConf(baseConf);
     clientCompDeConf.set(clientCompressorListVarName(), "compde3");
-    clientCompDeConf.set(clientCompdeParamPrefix("compde3-2.0") + ".version", "1.0,2.0");
-    clientCompDeConf.set(clientCompdeParamPrefix("compde3-2.0") + ".test2", "clientVal2");//overrides server
-    clientCompDeConf.set(clientCompdeParamPrefix("compde3-2.0") + ".test3", "clientVal3");
-    clientCompDeConf.set(clientCompdeParamPrefix("compde3-2.0") + ".test5", "clientVal5");//overriden by plug-in
-    clientCompDeConf.set(clientCompdeParamPrefix("compde3-1.0") + ".test6", "clientVal6");//not used
+    clientCompDeConf.set(clientCompdeParamPrefix("compde3") + ".version", "1.0");
+    clientCompDeConf.set(clientCompdeParamPrefix("compde3") + ".test2", "clientVal2");//overrides server
+    clientCompDeConf.set(clientCompdeParamPrefix("compde3") + ".test3", "clientVal3");
+    clientCompDeConf.set(clientCompdeParamPrefix("compde3") + ".test5", "clientVal5");//overriden by plug-in
   }
 
   private static String noCompDeConfigPrefix(String compDeName) {
@@ -112,7 +110,7 @@ public class TestCompDeNegotiation {
     // Pretend that we have no CompDe plug-ins
     protected Map<String, String> initCompde(
         String compdeName,
-        String compdeVersion,
+        String version,
         HiveConf serverConf,
         HiveConf clientConf) throws Exception {
       throw new Exception("No supported compdes");
@@ -149,7 +147,7 @@ public class TestCompDeNegotiation {
     // Pretend that we have plug-ins for all CompDes except "compde1"
     protected Map<String, String> initCompde(
         String compdeName,
-        String compdeVersion,
+        String version,
         HiveConf serverConf,
         HiveConf clientConf) throws Exception {
       if (compdeName.equals("compde1")) {
@@ -174,17 +172,14 @@ public class TestCompDeNegotiation {
     req.setConfiguration(noCompDes.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertNull(resp.getCompressorName());
-    assertNull(resp.getCompressorVersion());
 
     req.setConfiguration(clientSingleCompDe.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertNull(resp.getCompressorName());
-    assertNull(resp.getCompressorVersion());
 
     req.setConfiguration(clientMultiCompDes2.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertNull(resp.getCompressorName());
-    assertNull(resp.getCompressorVersion());
 
     service.stop();
   }
@@ -201,17 +196,14 @@ public class TestCompDeNegotiation {
     req.setConfiguration(noCompDes.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertNull(resp.getCompressorName());
-    assertNull(resp.getCompressorVersion());
 
     req.setConfiguration(clientSingleCompDe.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertEquals("compde3", resp.getCompressorName());
-    assertEquals("1.0", resp.getCompressorVersion());
 
     req.setConfiguration(clientMultiCompDes2.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertNull(resp.getCompressorName());
-    assertNull(resp.getCompressorVersion());
 
     service.stop();
   }
@@ -232,18 +224,15 @@ public class TestCompDeNegotiation {
     req.setConfiguration(clientSingleCompDe.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertEquals("compde3", resp.getCompressorName());
-    assertEquals("1.0", resp.getCompressorVersion());
 
     req.setConfiguration(clientMultiCompDes1.getValByRegex(".*"));
     resp = service.OpenSession(req);
-    // "compde1" fails to initialize because our mock service does not have that plug-in
+    // "compde1" fails to initialize because our mock service does not have that plugin
     assertEquals("compde2", resp.getCompressorName());
-    assertEquals("1.0", resp.getCompressorVersion());
 
     req.setConfiguration(clientMultiCompDes2.getValByRegex(".*"));
     resp = service.OpenSession(req);
     assertEquals("compde2", resp.getCompressorName());
-    assertEquals("2.0", resp.getCompressorVersion());
 
     service.stop();
   }
@@ -253,19 +242,14 @@ public class TestCompDeNegotiation {
     // Mock a plug-in with an `init` function.
     protected Map<String, String> initCompde(
         String compdeName,
-        String compdeVersion,
+        String version,
         HiveConf serverConf,
         HiveConf clientConf) {
-      if (compdeVersion.equals("1.0")) return null;
-      Map<String,String> serverCompdeParams =
-          getParamsForCompde(serverConf, compdeName, compdeVersion);
-      Map<String,String> clientCompdeParams =
-          getParamsForCompde(clientConf, compdeName, compdeVersion);
-      Map<String,String> finalParams = serverCompdeParams;
-      finalParams.putAll(clientCompdeParams);
-      finalParams.put(noCompDeConfigPrefix("compde3-2.0") + ".test4", "compDeVal4");//overrides server
-      finalParams.put(noCompDeConfigPrefix("compde3-2.0") + ".test5", "compDeVal5");//overrides client
-      finalParams.put(noCompDeConfigPrefix("compde3-2.0") + ".test6", "compDeVal6");
+      Map<String,String> finalParams = serverConf.getValByRegex(noCompDeConfigPrefix(compdeName) + ".*");
+      finalParams.putAll(clientConf.getValByRegex(noCompDeConfigPrefix(compdeName) + ".*"));
+      finalParams.put(noCompDeConfigPrefix("compde3") + ".test4", "compDeVal4");//overrides server
+      finalParams.put(noCompDeConfigPrefix("compde3") + ".test5", "compDeVal5");//overrides client
+      finalParams.put(noCompDeConfigPrefix("compde3") + ".test6", "compDeVal6");
       return finalParams;
     }
   }
@@ -274,15 +258,15 @@ public class TestCompDeNegotiation {
   // Ensure that the server allows the plug-in to combine the server's default
   // CompDe parameters with the client overrides and returns the final
   // configuration.
-  public void testVersionParams() throws TException {
+  public void testConfig() throws TException {
     Map<String, String> expectedConf = new HashMap<String, String>();
-    expectedConf.put(noCompDeConfigPrefix("compde3") + ".version", "2.0");
-    expectedConf.put(noCompDeConfigPrefix("compde3-2.0") + ".test1", "serverVal1");
-    expectedConf.put(noCompDeConfigPrefix("compde3-2.0") + ".test2", "clientVal2");
-    expectedConf.put(noCompDeConfigPrefix("compde3-2.0") + ".test3", "clientVal3");
-    expectedConf.put(noCompDeConfigPrefix("compde3-2.0") + ".test4", "compDeVal4");
-    expectedConf.put(noCompDeConfigPrefix("compde3-2.0") + ".test5", "compDeVal5");
-    expectedConf.put(noCompDeConfigPrefix("compde3-2.0") + ".test6", "compDeVal6");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".version", "1.0");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".test1", "serverVal1");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".test2", "clientVal2");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".test3", "clientVal3");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".test4", "compDeVal4");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".test5", "compDeVal5");
+    expectedConf.put(noCompDeConfigPrefix("compde3") + ".test6", "compDeVal6");
 
     ThriftCLIService service = new MockWithCompDeConfig();
     service.init(serverCompDeConf);
@@ -292,12 +276,6 @@ public class TestCompDeNegotiation {
 
     TOpenSessionResp resp = service.OpenSession(req);
     assertEquals("compde3", resp.getCompressorName());
-    assertEquals("2.0", resp.getCompressorVersion());
     assertEquals(expectedConf, resp.getCompressorParameters());
-  }
-  
-  @Test
-  public void testVersion() throws TException {
-    
   }
 }
