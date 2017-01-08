@@ -20,6 +20,9 @@ package org.apache.hive.jdbc;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.common.auth.HiveAuthUtils;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.serde2.compression.CompDe;
+import org.apache.hadoop.hive.serde2.compression.CompDeServiceLoader;
 import org.apache.hive.jdbc.Utils.JdbcConnectionParams;
 import org.apache.hive.service.auth.HiveAuthConstants;
 import org.apache.hive.service.auth.KerberosSaslHelper;
@@ -133,6 +136,7 @@ public class HiveConnection implements java.sql.Connection {
   private int loginTimeout = 0;
   private TProtocolVersion protocol;
   private int fetchSize = HiveStatement.DEFAULT_FETCH_SIZE;
+  private CompDe sessCompde;
   private String initFile = null;
 
   public HiveConnection(String uri, Properties info) throws SQLException {
@@ -679,6 +683,22 @@ public class HiveConnection implements java.sql.Connection {
     try {
       TOpenSessionResp openResp = client.OpenSession(openReq);
 
+      // Server initialized CompDe
+      if (openResp.isSetCompressorName())
+      {
+        try {
+          CompDe testCompde = CompDeServiceLoader.getInstance()
+              .getCompde(openResp.getCompressorName(), openResp.getCompressorVersion());
+          testCompde.init(openResp.getCompressorParameters());
+          sessCompde = testCompde;
+        }
+        catch (Exception e) {
+          openReq.getConfiguration().remove(
+              "set:hiveconf:" + ConfVars.HIVE_SERVER2_THRIFT_RESULTSET_COMPRESSOR_LIST.varname);
+          openResp = client.OpenSession(openReq);
+        }
+      }
+
       // validate connection
       Utils.verifySuccess(openResp.getStatus());
       if (!supportedProtocols.contains(openResp.getServerProtocolVersion())) {
@@ -1026,6 +1046,10 @@ public class HiveConnection implements java.sql.Connection {
   public String getClientInfo(String name) throws SQLException {
     // TODO Auto-generated method stub
     throw new SQLFeatureNotSupportedException("Method not supported");
+  }
+
+  public CompDe getCompde() {
+    return sessCompde;
   }
 
   /*

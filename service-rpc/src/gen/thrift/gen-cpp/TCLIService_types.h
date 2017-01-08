@@ -2204,9 +2204,11 @@ inline std::ostream& operator<<(std::ostream& out, const TOpenSessionReq& obj)
 }
 
 typedef struct _TOpenSessionResp__isset {
-  _TOpenSessionResp__isset() : sessionHandle(false), configuration(false) {}
+  _TOpenSessionResp__isset() : sessionHandle(false), compressorParameters(false), compressorName(false), compressorVersion(false) {}
   bool sessionHandle :1;
-  bool configuration :1;
+  bool compressorParameters :1;
+  bool compressorName :1;
+  bool compressorVersion :1;
 } _TOpenSessionResp__isset;
 
 class TOpenSessionResp {
@@ -2214,7 +2216,7 @@ class TOpenSessionResp {
 
   TOpenSessionResp(const TOpenSessionResp&);
   TOpenSessionResp& operator=(const TOpenSessionResp&);
-  TOpenSessionResp() : serverProtocolVersion((TProtocolVersion::type)9) {
+  TOpenSessionResp() : serverProtocolVersion((TProtocolVersion::type)9), compressorName(), compressorVersion() {
     serverProtocolVersion = (TProtocolVersion::type)9;
 
   }
@@ -2223,7 +2225,9 @@ class TOpenSessionResp {
   TStatus status;
   TProtocolVersion::type serverProtocolVersion;
   TSessionHandle sessionHandle;
-  std::map<std::string, std::string>  configuration;
+  std::map<std::string, std::string>  compressorParameters;
+  std::string compressorName;
+  std::string compressorVersion;
 
   _TOpenSessionResp__isset __isset;
 
@@ -2233,7 +2237,11 @@ class TOpenSessionResp {
 
   void __set_sessionHandle(const TSessionHandle& val);
 
-  void __set_configuration(const std::map<std::string, std::string> & val);
+  void __set_compressorParameters(const std::map<std::string, std::string> & val);
+
+  void __set_compressorName(const std::string& val);
+
+  void __set_compressorVersion(const std::string& val);
 
   bool operator == (const TOpenSessionResp & rhs) const
   {
@@ -2245,9 +2253,17 @@ class TOpenSessionResp {
       return false;
     else if (__isset.sessionHandle && !(sessionHandle == rhs.sessionHandle))
       return false;
-    if (__isset.configuration != rhs.__isset.configuration)
+    if (__isset.compressorParameters != rhs.__isset.compressorParameters)
       return false;
-    else if (__isset.configuration && !(configuration == rhs.configuration))
+    else if (__isset.compressorParameters && !(compressorParameters == rhs.compressorParameters))
+      return false;
+    if (__isset.compressorName != rhs.__isset.compressorName)
+      return false;
+    else if (__isset.compressorName && !(compressorName == rhs.compressorName))
+      return false;
+    if (__isset.compressorVersion != rhs.__isset.compressorVersion)
+      return false;
+    else if (__isset.compressorVersion && !(compressorVersion == rhs.compressorVersion))
       return false;
     return true;
   }
