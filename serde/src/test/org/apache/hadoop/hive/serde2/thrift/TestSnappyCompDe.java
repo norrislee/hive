@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hive.serde2.thrift;
+package org.apache.hadoop.hive.serde2.thrift_test;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.serde2.thrift.ColumnBuffer;
