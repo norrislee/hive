@@ -637,6 +637,8 @@ public class HiveConnection implements java.sql.Connection {
     }
     // switch the database
     openConf.put("use:database", connParams.getDbName());
+    // set the fetchSize
+    openConf.put("set:fetchSize", Integer.toString(fetchSize));
 
     // set the session configuration
     Map<String, String> sessVars = connParams.getSessionVars();

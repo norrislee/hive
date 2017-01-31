@@ -309,6 +309,19 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     LOG.info("Client protocol version: " + req.getClient_protocol());
     TOpenSessionResp resp = new TOpenSessionResp();
     try {
+      Map<String, String> openConf = req.getConfiguration();
+
+      // Set fetch size in hive conf
+      int maxFetchSize =
+          hiveConf.getIntVar(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_RESULTSET_MAX_FETCH_SIZE);
+      String confFetchSize = openConf.get("set:fetchSize");
+      if (confFetchSize != null && !confFetchSize.isEmpty()) {
+        int fetchSize = Integer.parseInt(confFetchSize);
+        hiveConf.setLongVar(
+          HiveConf.ConfVars.HIVE_SERVER2_RESULTSET_DEFAULT_FETCH_SIZE,
+          fetchSize > maxFetchSize ? maxFetchSize : fetchSize);
+      }
+
       SessionHandle sessionHandle = getSessionHandle(req, resp);
       resp.setSessionHandle(sessionHandle.toTSessionHandle());
       // TODO: set real configuration map
