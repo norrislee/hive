@@ -80,6 +80,7 @@ public class HiveQueryResultSet extends HiveBaseResultSet {
   private boolean fetchFirst = false;
 
   private final TProtocolVersion protocol;
+  private final CompDe compde;
 
   public static class Builder {
 
@@ -195,6 +196,7 @@ public class HiveQueryResultSet extends HiveBaseResultSet {
     normalizedColumnNames = new ArrayList<String>();
     columnTypes = new ArrayList<String>();
     columnAttributes = new ArrayList<JdbcColumnAttributes>();
+    compde = ((HiveConnection) builder.connection).getCompde();
     if (builder.retrieveSchema) {
       retrieveSchema();
     } else {
@@ -375,7 +377,7 @@ public class HiveQueryResultSet extends HiveBaseResultSet {
         Utils.verifySuccessWithInfo(fetchResp.getStatus());
 
         TRowSet results = fetchResp.getResults();
-        fetchedRows = RowSetFactory.create(results, protocol);
+        fetchedRows = RowSetFactory.create(results, protocol, compde);
         fetchedRowsItr = fetchedRows.iterator();
       }
 

@@ -20,7 +20,9 @@ package org.apache.hadoop.hive.serde2.thrift;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -31,6 +33,8 @@ import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
+import org.apache.hadoop.hive.serde2.thrift.CompDe;
+import org.apache.hadoop.hive.serde2.thrift.CompDeServiceLoader;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -66,7 +70,8 @@ public class ThriftJDBCBinarySerDe extends AbstractSerDe {
   private int MAX_BUFFERED_ROWS;
   private int count;
   private StructObjectInspector rowObjectInspector;
-
+  private CompDe compde;
+  
 
   @Override
   public void initialize(Configuration conf, Properties tbl) throws SerDeException {

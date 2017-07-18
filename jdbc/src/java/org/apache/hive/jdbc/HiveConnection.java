@@ -709,7 +709,7 @@ public class HiveConnection implements java.sql.Connection {
 
       // Update fetchSize if modified by server
       String serverFetchSize =
-        openResp.getConfiguration().get("hive.server2.thrift.resultset.default.fetch.size");
+        openResp.getCompressorParameters().get("hive.server2.thrift.resultset.default.fetch.size");
       if (serverFetchSize != null) {
         fetchSize = Integer.parseInt(serverFetchSize);
       }
