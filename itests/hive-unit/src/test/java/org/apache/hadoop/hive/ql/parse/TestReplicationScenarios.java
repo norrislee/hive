@@ -622,7 +622,7 @@ public class TestReplicationScenarios {
   @Test
   public void testIncrementalLoadWithVariableLengthEventId() throws IOException, TException {
     String testName = "incrementalLoadWithVariableLengthEventId";
-    String dbName = createDB(testName);
+    final String dbName = createDB(testName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
     run("INSERT INTO TABLE " + dbName + ".unptned values('ten')");
 

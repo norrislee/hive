@@ -3389,7 +3389,7 @@ public abstract class TestHiveMetaStore extends TestCase {
   public void testGetUUIDInParallel() throws Exception {
     int numThreads = 5;
     int parallelCalls = 10;
-    int numAPICallsPerThread = 10;
+    final int numAPICallsPerThread = 10;
     ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
     List<Future<List<String>>> futures = new ArrayList<>();
     for (int n = 0; n < parallelCalls; n++) {

@@ -156,7 +156,7 @@ public class SQLOperation extends ExecuteStatementOperation {
    *
    * @throws HiveSQLException
    */
-  public void prepare(QueryState queryState) throws HiveSQLException {
+  public void prepare(final QueryState queryState) throws HiveSQLException {
     setState(OperationState.RUNNING);
     try {
       driver = new Driver(queryState, getParentSession().getUserName(), queryInfo);
